@@ -41,6 +41,11 @@
     <canvas id="graficoSol"></canvas>
   </div>
 
+  <div class="grafico-container">
+    <h3>🌧️ Pluviometria (mm)</h3>
+    <canvas id="graficoChuva"></canvas>
+  </div>
+
   <script>
     async function carregarCSV() {
       const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
@@ -50,22 +55,21 @@
       const texto = await resp.text();
 
       const linhas = texto.split("\n").map(l => l.split(","));
-      const header = linhas[0]; // cabeçalhos
-      const dados = linhas.slice(1); // dados
+      const dados = linhas.slice(1); // pula cabeçalho
 
       const tempo = dados.map(l => l[2]); // HORARIOS
       const temperatura = dados.map(l => parseFloat(l[3]));
       const umidade = dados.map(l => parseFloat(l[4]));
       const vento = dados.map(l => parseFloat(l[5]));
       const irradiacao = dados.map(l => parseFloat(l[6]));
+      const chuva = dados.map(l => parseFloat(l[7])); // 🌧️ nova coluna
 
-      return { tempo, temperatura, umidade, vento, irradiacao };
+      return { tempo, temperatura, umidade, vento, irradiacao, chuva };
     }
 
     async function desenharGraficos() {
-      const { tempo, temperatura, umidade, vento, irradiacao } = await carregarCSV();
+      const { tempo, temperatura, umidade, vento, irradiacao, chuva } = await carregarCSV();
 
-      // Função para criar gráfico
       function criarGrafico(ctx, label, data, cor) {
         new Chart(ctx, {
           type: "line",
@@ -75,7 +79,7 @@
               label: label,
               data: data,
               borderColor: cor,
-              backgroundColor: cor + "33", // cor transparente
+              backgroundColor: cor + "33",
               tension: 0.3,
               pointRadius: 0
             }]
@@ -83,7 +87,7 @@
           options: {
             responsive: true,
             plugins: { legend: { display: false } },
-            scales: { x: { display: true }, y: { beginAtZero: false } }
+            scales: { x: { display: true }, y: { beginAtZero: true } }
           }
         });
       }
@@ -92,6 +96,7 @@
       criarGrafico(document.getElementById("graficoUmid"), "Umidade", umidade, "blue");
       criarGrafico(document.getElementById("graficoVento"), "Vento", vento, "green");
       criarGrafico(document.getElementById("graficoSol"), "Irradiação Solar", irradiacao, "orange");
+      criarGrafico(document.getElementById("graficoChuva"), "Pluviometria", chuva, "purple");
     }
 
     desenharGraficos();
