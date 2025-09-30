@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
@@ -7,54 +7,115 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      background: url('https://source.unsplash.com/1600x900/?weather') no-repeat center center fixed;
+      background-size: cover;
       color: #333;
+      position: relative;
     }
+
+    /* Fundo desfocado */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: inherit;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 10px;
     }
+
+    .last-update {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: rgba(255,255,255,0.7);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 15px;
       margin-bottom: 30px;
     }
+
     .card {
-      background: white;
+      background: rgba(255,255,255,0.85);
       padding: 15px;
       border-radius: 12px;
       text-align: center;
       box-shadow: 0px 4px 8px rgba(0,0,0,0.05);
     }
+
     .card h3 {
       margin: 5px 0;
       font-size: 16px;
       color: #666;
     }
+
     .card p {
       font-size: 20px;
       font-weight: bold;
     }
+
     .charts {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 25px;
     }
+
     .chart-box {
-      background: white;
+      background: rgba(255,255,255,0.85);
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0px 4px 10px rgba(0,0,0,0.08);
     }
+
     canvas {
       max-width: 100%;
+    }
+
+    .btn-load {
+      display: block;
+      margin: 15px auto;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.9);
+      padding: 20px 40px;
+      border-radius: 12px;
+      font-size: 18px;
+      display: none;
+      z-index: 999;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
     }
   </style>
 </head>
 <body>
   <h1>📊 Painel da Estação Meteorológica</h1>
+  <div class="last-update" id="lastUpdate">Última atualização: --</div>
+  <div class="loading" id="loading">Carregando dados...</div>
+
+  <button class="btn-load" onclick="carregarCSV(true)">Carregar últimos 7 dias</button>
 
   <!-- Indicadores principais -->
   <div class="cards">
@@ -105,7 +166,9 @@
   </div>
 
   <script>
-    async function carregarCSV() {
+    async function carregarCSV(seteDias=false) {
+      document.getElementById('loading').style.display = 'block';
+
       const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
       const resposta = await fetch(url);
       const texto = await resposta.text();
@@ -118,14 +181,21 @@
       const irradiacoes = [];
       const chuvas = [];
 
+      const agora = new Date();
+      const limite = seteDias ? 7 : 1;
+
       linhas.forEach(linha => {
         const cols = linha.split(",");
-        datas.push(cols[1] + " " + cols[2]); // Data + Hora
-        temperaturas.push(parseFloat(cols[3]));
-        umidades.push(parseFloat(cols[4]));
-        ventos.push(parseFloat(cols[5]));
-        irradiacoes.push(parseFloat(cols[6]));
-        chuvas.push(parseFloat(cols[7]));
+        const dt = new Date(cols[1] + "T" + cols[2]);
+        const diffHoras = (agora - dt) / 36e5; // diferença em horas
+        if(diffHoras <= limite*24) {
+          datas.push(cols[1] + " " + cols[2]); // Data + Hora
+          temperaturas.push(parseFloat(cols[3]));
+          umidades.push(parseFloat(cols[4]));
+          ventos.push(parseFloat(cols[5]));
+          irradiacoes.push(parseFloat(cols[6]));
+          chuvas.push(parseFloat(cols[7]));
+        }
       });
 
       // Atualizar indicadores principais
@@ -135,16 +205,23 @@
       document.getElementById("irr").innerText = irradiacoes.at(-1) + " W/m²";
       document.getElementById("chuva").innerText = chuvas.at(-1) + " mm";
 
+      // Atualizar data da última medição
+      document.getElementById("lastUpdate").innerText = "Última atualização: " + datas.at(-1);
+
       // Criar gráficos
       criarGrafico("graficoTemp", "Temperatura (°C)", datas, temperaturas, "red");
       criarGrafico("graficoUmid", "Umidade (%)", datas, umidades, "blue");
       criarGrafico("graficoVento", "Vento (km/h)", datas, ventos, "orange");
       criarGrafico("graficoIrr", "Irradiação (W/m²)", datas, irradiacoes, "purple");
       criarGrafico("graficoChuva", "Pluviometria (mm)", datas, chuvas, "green");
+
+      document.getElementById('loading').style.display = 'none';
     }
 
     function criarGrafico(id, label, labels, dados, cor) {
-      new Chart(document.getElementById(id), {
+      const ctx = document.getElementById(id).getContext('2d');
+      if(window[id]) window[id].destroy(); // destruir gráfico anterior
+      window[id] = new Chart(ctx, {
         type: "line",
         data: {
           labels: labels,
@@ -169,6 +246,7 @@
       });
     }
 
+    // Carrega automaticamente últimas 24h
     carregarCSV();
   </script>
 </body>
