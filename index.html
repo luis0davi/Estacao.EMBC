@@ -11,14 +11,29 @@
       background: #f4f6f9;
       color: #333;
     }
-    h1 { text-align: center; margin-bottom: 10px; }
+    h1 { text-align: center; margin-bottom: 5px; }
+    #descricao { text-align: center; font-size: 14px; color: #555; margin-bottom: 10px; }
     #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 20px; }
 
-    /* Filtros */
-    .filtros {
-      text-align: center;
-      margin-bottom: 25px;
+    /* Botão de localização */
+    #btnLocalizacao {
+      display: block;
+      margin: 0 auto 20px auto;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
     }
+    #btnLocalizacao:hover {
+      background: #1e7e34;
+    }
+
+    /* Filtros */
+    .filtros { text-align: center; margin-bottom: 25px; }
     .btnFiltro {
       background: #007bff;
       color: white;
@@ -30,9 +45,7 @@
       margin: 5px 5px 5px 0;
       transition: 0.3s;
     }
-    .btnFiltro:hover {
-      background: #0056b3;
-    }
+    .btnFiltro:hover { background: #0056b3; }
     .filtros input {
       margin: 5px 5px 5px 0;
       padding: 7px 10px;
@@ -41,10 +54,7 @@
       font-size: 14px;
       transition: 0.3s;
     }
-    .filtros input:focus {
-      border-color: #007bff;
-      outline: none;
-    }
+    .filtros input:focus { border-color: #007bff; outline: none; }
 
     /* Cards */
     .cards {
@@ -61,10 +71,7 @@
       box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0px 6px 16px rgba(0,0,0,0.12);
-    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
     .card h3 { margin: 5px 0; font-size: 16px; color: #666; }
     .card p { font-size: 20px; font-weight: bold; }
 
@@ -81,15 +88,14 @@
       box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    .chart-box:hover {
-      transform: translateY(-3px);
-      box-shadow: 0px 6px 16px rgba(0,0,0,0.12);
-    }
+    .chart-box:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
     canvas { max-width: 100%; }
   </style>
 </head>
 <body>
-  <h1>📊 Painel da Estação - EMBC</h1>
+  <h1>📊 Painel da Estação Meteorológica</h1>
+  <div id="descricao">Esta é a Mini Estação Meteorológica de baixo custo desenvolvida por Luis Davi, coletando dados ambientais em tempo real.</div>
+  <button id="btnLocalizacao" onclick="window.open('https://maps.app.goo.gl/zd4LaZUR3F4RVvzY6', '_blank')">📍 Localização da Estação</button>
   <div id="ultimaAtualizacao">Última atualização: --</div>
 
   <!-- Filtros -->
@@ -140,12 +146,11 @@
         };
       });
 
-      atualizarPainel(1); // últimos 24h
+      atualizarPainel(1);
     }
 
     function atualizarPainel(dias = 1, dataInicio = null, dataFim = null) {
       let dadosFiltrados = csvData;
-
       if (dataInicio && dataFim) {
         dadosFiltrados = csvData.filter(item => item.dataHora >= dataInicio && item.dataHora <= dataFim);
       } else {
@@ -216,4 +221,3 @@
   </script>
 </body>
 </html>
-
