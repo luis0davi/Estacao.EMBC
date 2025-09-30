@@ -95,25 +95,11 @@
       font-size: 16px;
       cursor: pointer;
     }
-
-    .loading {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(255,255,255,0.9);
-      padding: 20px 40px;
-      border-radius: 12px;
-      font-size: 18px;
-      display: none;
-      z-index: 999;
-      box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-    }
   </style>
 </head>
 <body>
   <h1>📊 Painel da Estação Meteorológica</h1>
   <div class="last-update" id="lastUpdate">Última atualização: --</div>
-  <div class="loading" id="loading">Carregando dados...</div>
 
   <button class="btn-load" onclick="carregarCSV(true)">Carregar últimos 7 dias</button>
 
@@ -165,88 +151,79 @@
     </div>
   </div>
 
-<script>
-async function carregarCSV(seteDias=false) {
-  const loading = document.getElementById('loading');
-  loading.style.display = 'block';
+  <script>
+    async function carregarCSV(seteDias=false) {
+      try {
+        const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
+        const resposta = await fetch(url);
+        const texto = await resposta.text();
 
-  try {
-    const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
-    const resposta = await fetch(url);
-    const texto = await resposta.text();
+        const sep = texto.includes(';') ? ';' : ',';
+        const linhas = texto.trim().split(/\r?\n/).slice(1);
 
-    // Detecta separador: vírgula ou ponto e vírgula
-    const sep = texto.includes(';') ? ';' : ',';
-    const linhas = texto.trim().split(/\r?\n/).slice(1);
+        const datas = [], temperaturas = [], umidades = [], ventos = [], irradiacoes = [], chuvas = [];
+        const agora = new Date();
+        const limite = seteDias ? 7 : 1;
 
-    const datas = [], temperaturas = [], umidades = [], ventos = [], irradiacoes = [], chuvas = [];
-    const agora = new Date();
-    const limite = seteDias ? 7 : 1;
+        linhas.forEach(linha => {
+          const cols = linha.split(sep);
+          if(cols.length < 8) return;
+          const dtStr = cols[1].trim() + "T" + cols[2].trim();
+          const dt = new Date(dtStr);
+          if(isNaN(dt)) return;
+          const diffHoras = (agora - dt)/36e5;
+          if(diffHoras <= limite*24) {
+            datas.push(cols[1].trim() + " " + cols[2].trim());
+            temperaturas.push(parseFloat(cols[3]) || 0);
+            umidades.push(parseFloat(cols[4]) || 0);
+            ventos.push(parseFloat(cols[5]) || 0);
+            irradiacoes.push(parseFloat(cols[6]) || 0);
+            chuvas.push(parseFloat(cols[7]) || 0);
+          }
+        });
 
-    linhas.forEach(linha => {
-      const cols = linha.split(sep);
-      if(cols.length < 8) return; // pula linhas inválidas
-      const dtStr = cols[1].trim() + "T" + cols[2].trim();
-      const dt = new Date(dtStr);
-      if(isNaN(dt)) return; // pula datas inválidas
-      const diffHoras = (agora - dt)/36e5;
-      if(diffHoras <= limite*24) {
-        datas.push(cols[1].trim() + " " + cols[2].trim());
-        temperaturas.push(parseFloat(cols[3]) || 0);
-        umidades.push(parseFloat(cols[4]) || 0);
-        ventos.push(parseFloat(cols[5]) || 0);
-        irradiacoes.push(parseFloat(cols[6]) || 0);
-        chuvas.push(parseFloat(cols[7]) || 0);
+        if(datas.length === 0) return;
+
+        // Atualizar indicadores
+        document.getElementById("temp").innerText = temperaturas.at(-1) + " °C";
+        document.getElementById("umid").innerText = umidades.at(-1) + " %";
+        document.getElementById("vento").innerText = ventos.at(-1) + " km/h";
+        document.getElementById("irr").innerText = irradiacoes.at(-1) + " W/m²";
+        document.getElementById("chuva").innerText = chuvas.at(-1) + " mm";
+
+        document.getElementById("lastUpdate").innerText = "Última atualização: " + datas.at(-1);
+
+        // Criar gráficos
+        criarGrafico("graficoTemp", "Temperatura (°C)", datas, temperaturas, "red");
+        criarGrafico("graficoUmid", "Umidade (%)", datas, umidades, "blue");
+        criarGrafico("graficoVento", "Vento (km/h)", datas, ventos, "orange");
+        criarGrafico("graficoIrr", "Irradiação (W/m²)", datas, irradiacoes, "purple");
+        criarGrafico("graficoChuva", "Pluviometria (mm)", datas, chuvas, "green");
+
+      } catch(e) {
+        console.error("Erro ao carregar CSV:", e);
       }
-    });
-
-    if(datas.length === 0) {
-      alert("Nenhum dado encontrado para o período selecionado.");
-      loading.style.display = 'none';
-      return;
     }
 
-    // Atualizar indicadores
-    document.getElementById("temp").innerText = temperaturas.at(-1) + " °C";
-    document.getElementById("umid").innerText = umidades.at(-1) + " %";
-    document.getElementById("vento").innerText = ventos.at(-1) + " km/h";
-    document.getElementById("irr").innerText = irradiacoes.at(-1) + " W/m²";
-    document.getElementById("chuva").innerText = chuvas.at(-1) + " mm";
-
-    document.getElementById("lastUpdate").innerText = "Última atualização: " + datas.at(-1);
-
-    // Criar gráficos
-    criarGrafico("graficoTemp", "Temperatura (°C)", datas, temperaturas, "red");
-    criarGrafico("graficoUmid", "Umidade (%)", datas, umidades, "blue");
-    criarGrafico("graficoVento", "Vento (km/h)", datas, ventos, "orange");
-    criarGrafico("graficoIrr", "Irradiação (W/m²)", datas, irradiacoes, "purple");
-    criarGrafico("graficoChuva", "Pluviometria (mm)", datas, chuvas, "green");
-
-  } catch(e) {
-    console.error("Erro ao carregar CSV:", e);
-    alert("Erro ao carregar os dados. Verifique a planilha ou a conexão.");
-  } finally {
-    loading.style.display = 'none';
-  }
-}
-
-function criarGrafico(id, label, labels, dados, cor) {
-  const ctx = document.getElementById(id).getContext('2d');
-  if(window[id]) window[id].destroy();
-  window[id] = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [{ label, data: dados, borderColor: cor, borderWidth: 2, tension: 0.3, fill: false, pointRadius: 0 }]
-    },
-    options: {
-      responsive: true,
-      scales: { x: { display: true, ticks: { maxRotation: 45, minRotation: 45 } }, y: { beginAtZero: true } },
-      plugins: { legend: { display: true } }
+    function criarGrafico(id, label, labels, dados, cor) {
+      const ctx = document.getElementById(id).getContext('2d');
+      if(window[id]) window[id].destroy();
+      window[id] = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{ label, data: dados, borderColor: cor, borderWidth: 2, tension: 0.3, fill: false, pointRadius: 0 }]
+        },
+        options: {
+          responsive: true,
+          scales: { x: { display: true, ticks: { maxRotation: 45, minRotation: 45 } }, y: { beginAtZero: true } },
+          plugins: { legend: { display: true } }
+        }
+      });
     }
-  });
-}
 
-// Inicializa com últimos 24h
-carregarCSV();
-</script>
+    // Inicializa com últimos 24h
+    carregarCSV();
+  </script>
+</body>
+</html>
