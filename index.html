@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>📊 Painel da Estação Meteorológica EMBC</title>
+  <title>📊 Painel da Estação Meteorológica</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -12,28 +12,93 @@
       color: #333;
     }
     h1 { text-align: center; margin-bottom: 10px; }
-    #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 10px; }
-    .filtros { text-align: center; margin-bottom: 20px; }
-    .filtros input, .filtros button { margin: 0 5px; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0px 4px 8px rgba(0,0,0,0.05); }
+    #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 20px; }
+
+    /* Filtros */
+    .filtros {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .btnFiltro {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+      transition: 0.3s;
+    }
+    .btnFiltro:hover {
+      background: #0056b3;
+    }
+    .filtros input {
+      margin: 5px 5px 5px 0;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+    .filtros input:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0px 6px 16px rgba(0,0,0,0.12);
+    }
     .card h3 { margin: 5px 0; font-size: 16px; color: #666; }
     .card p { font-size: 20px; font-weight: bold; }
-    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-    .chart-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 10px rgba(0,0,0,0.08); }
+
+    /* Gráficos */
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+    }
+    .chart-box {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .chart-box:hover {
+      transform: translateY(-3px);
+      box-shadow: 0px 6px 16px rgba(0,0,0,0.12);
+    }
     canvas { max-width: 100%; }
   </style>
 </head>
 <body>
-  <h1>📊 Painel da Estação Meteorológica</h1>
+  <h1>📊 Painel da Estação Meteorológica EMBC</h1>
   <div id="ultimaAtualizacao">Última atualização: --</div>
 
+  <!-- Filtros -->
   <div class="filtros">
-    <button id="btn24h">Últimas 24h</button>
-    <button id="btn7dias">Últimos 7 dias</button>
-    <label>Data início: <input type="date" id="dataInicio"></label>
-    <label>Data fim: <input type="date" id="dataFim"></label>
-    <button id="btnCustom">Aplicar filtro</button>
+    <button class="btnFiltro" id="btn24h">Últimas 24h</button>
+    <button class="btnFiltro" id="btn7dias">Últimos 7 dias</button>
+    <label>Início: <input type="datetime-local" id="dataInicio"></label>
+    <label>Fim: <input type="datetime-local" id="dataFim"></label>
+    <button class="btnFiltro" id="btnCustom">Aplicar filtro</button>
   </div>
 
   <!-- Indicadores principais -->
@@ -118,7 +183,7 @@
       if (ctx.chart) ctx.chart.destroy();
       ctx.chart = new Chart(ctx, {
         type: "line",
-        data: { labels: labels, datasets: [{ label, data: dados, borderColor: cor, borderWidth: 2, tension: 0.3, fill: false, pointRadius: 0 }] },
+        data: { labels, datasets: [{ label, data: dados, borderColor: cor, borderWidth: 2, tension: 0.3, fill: false, pointRadius: 0 }] },
         options: {
           responsive: true,
           scales: { x: { display: true, ticks: { maxRotation: 45, minRotation: 45 } }, y: { beginAtZero: true } },
@@ -128,12 +193,8 @@
               mode: 'index',
               intersect: false,
               callbacks: {
-                label: function(context) {
-                  return `${context.dataset.label}: ${context.formattedValue}`;
-                },
-                title: function(context) {
-                  return context[0].label;
-                }
+                label: context => `${context.dataset.label}: ${context.formattedValue}`,
+                title: context => context[0].label
               }
             }
           }
@@ -146,13 +207,12 @@
     document.getElementById("btnCustom").addEventListener("click", () => {
       const inicio = new Date(document.getElementById("dataInicio").value);
       const fim = new Date(document.getElementById("dataFim").value);
-      fim.setHours(23,59,59); // incluir todo o último dia
+      fim.setSeconds(59, 999);
       atualizarPainel(0, inicio, fim);
     });
 
     carregarCSV();
-    setInterval(carregarCSV, 5 * 60 * 1000); // atualização automática a cada 5 minutos
+    setInterval(carregarCSV, 5 * 60 * 1000);
   </script>
 </body>
 </html>
-
