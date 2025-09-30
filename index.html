@@ -13,13 +13,19 @@
     }
     h1 {
       text-align: center;
+      margin-bottom: 10px;
+    }
+    #ultimaAtualizacao {
+      text-align: center;
+      font-size: 14px;
+      color: #555;
       margin-bottom: 30px;
     }
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 15px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
     .card {
       background: white;
@@ -51,10 +57,27 @@
     canvas {
       max-width: 100%;
     }
+    #btnSeteDias {
+      display: block;
+      margin: 20px auto 40px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #btnSeteDias:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
   <h1>📊 Painel da Estação Meteorológica</h1>
+  <div id="ultimaAtualizacao">Última atualização: --</div>
+
+  <button id="btnSeteDias">📅 Carregar últimos 7 dias</button>
 
   <!-- Indicadores principais -->
   <div class="cards">
@@ -105,37 +128,51 @@
   </div>
 
   <script>
+    let csvData = [];
+
     async function carregarCSV() {
       const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
       const resposta = await fetch(url);
       const texto = await resposta.text();
-
       const linhas = texto.trim().split("\n").slice(1);
-      const datas = [];
-      const temperaturas = [];
-      const umidades = [];
-      const ventos = [];
-      const irradiacoes = [];
-      const chuvas = [];
 
-      linhas.forEach(linha => {
+      csvData = linhas.map(linha => {
         const cols = linha.split(",");
-        datas.push(cols[1] + " " + cols[2]); // Data + Hora
-        temperaturas.push(parseFloat(cols[3]));
-        umidades.push(parseFloat(cols[4]));
-        ventos.push(parseFloat(cols[5]));
-        irradiacoes.push(parseFloat(cols[6]));
-        chuvas.push(parseFloat(cols[7]));
+        return {
+          dataHora: new Date(cols[1] + " " + cols[2]),
+          temp: parseFloat(cols[3]),
+          umid: parseFloat(cols[4]),
+          vento: parseFloat(cols[5]),
+          irr: parseFloat(cols[6]),
+          chuva: parseFloat(cols[7])
+        };
       });
 
-      // Atualizar indicadores principais
-      document.getElementById("temp").innerText = temperaturas.at(-1) + " °C";
-      document.getElementById("umid").innerText = umidades.at(-1) + " %";
-      document.getElementById("vento").innerText = ventos.at(-1) + " km/h";
-      document.getElementById("irr").innerText = irradiacoes.at(-1) + " W/m²";
-      document.getElementById("chuva").innerText = chuvas.at(-1) + " mm";
+      atualizarPainel(1); // por padrão, últimos 24h
+    }
 
-      // Criar gráficos
+    function atualizarPainel(dias = 1) {
+      const agora = new Date();
+      const limite = new Date(agora.getTime() - dias*24*60*60*1000);
+      const dadosFiltrados = csvData.filter(item => item.dataHora >= limite);
+
+      const datas = dadosFiltrados.map(i => i.dataHora.toLocaleString());
+      const temperaturas = dadosFiltrados.map(i => i.temp);
+      const umidades = dadosFiltrados.map(i => i.umid);
+      const ventos = dadosFiltrados.map(i => i.vento);
+      const irradiacoes = dadosFiltrados.map(i => i.irr);
+      const chuvas = dadosFiltrados.map(i => i.chuva);
+
+      if (dadosFiltrados.length > 0) {
+        const ultimo = dadosFiltrados.at(-1);
+        document.getElementById("temp").innerText = ultimo.temp + " °C";
+        document.getElementById("umid").innerText = ultimo.umid + " %";
+        document.getElementById("vento").innerText = ultimo.vento + " km/h";
+        document.getElementById("irr").innerText = ultimo.irr + " W/m²";
+        document.getElementById("chuva").innerText = ultimo.chuva + " mm";
+        document.getElementById("ultimaAtualizacao").innerText = "Última atualização: " + ultimo.dataHora.toLocaleString();
+      }
+
       criarGrafico("graficoTemp", "Temperatura (°C)", datas, temperaturas, "red");
       criarGrafico("graficoUmid", "Umidade (%)", datas, umidades, "blue");
       criarGrafico("graficoVento", "Vento (km/h)", datas, ventos, "orange");
@@ -144,7 +181,9 @@
     }
 
     function criarGrafico(id, label, labels, dados, cor) {
-      new Chart(document.getElementById(id), {
+      const ctx = document.getElementById(id).getContext('2d');
+      if (ctx.chart) ctx.chart.destroy(); // destruir gráfico anterior
+      ctx.chart = new Chart(ctx, {
         type: "line",
         data: {
           labels: labels,
@@ -168,6 +207,10 @@
         }
       });
     }
+
+    document.getElementById("btnSeteDias").addEventListener("click", () => {
+      atualizarPainel(7);
+    });
 
     carregarCSV();
   </script>
