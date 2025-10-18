@@ -1,73 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>📊 Painel da Estação EMBC</title>
+  <meta charset="UTF-8">
+  <title>📊 Painel da Estação Meteorológica</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      margin: 0;
-      background: #f5f7fa;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f9;
       color: #333;
     }
-    header {
-      text-align: center;
-      padding: 20px 10px 10px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-    #descricao {
-      font-size: 14px;
-      color: #555;
-      margin-top: 6px;
-    }
-    #ultimaAtualizacao {
-      text-align: center;
-      font-size: 13px;
-      color: #666;
-      margin: 10px 0 20px;
-    }
+    h1 { text-align: center; margin-bottom: 5px; }
+    #descricao { text-align: center; font-size: 14px; color: #555; margin-bottom: 10px; }
+    #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 20px; }
 
-    /* Botões de ação */
-    .acoes {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .btn {
+    /* Botão de localização */
+    #btnLocalizacao {
+      display: block;
+      margin: 0 auto 20px auto;
+      background: #28a745;
+      color: white;
       border: none;
-      border-radius: 10px;
-      padding: 10px 18px;
+      border-radius: 8px;
+      padding: 10px 20px;
       font-size: 14px;
       cursor: pointer;
-      color: white;
       transition: 0.3s;
-      font-weight: 500;
     }
-    .btn-local {
-      background: #28a745;
-    }
-    .btn-local:hover {
+    #btnLocalizacao:hover {
       background: #1e7e34;
-    }
-    .btn-dados {
-      background: #007bff;
-    }
-    .btn-dados:hover {
-      background: #0056b3;
     }
 
     /* Filtros */
-    .filtros {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+    .filtros { text-align: center; margin-bottom: 25px; }
     .btnFiltro {
       background: #007bff;
       color: white;
@@ -75,98 +41,74 @@
       border-radius: 8px;
       padding: 8px 15px;
       cursor: pointer;
-      font-size: 13px;
-      margin: 5px;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
       transition: 0.3s;
     }
-    .btnFiltro:hover {
-      background: #0056b3;
-    }
+    .btnFiltro:hover { background: #0056b3; }
     .filtros input {
-      margin: 5px;
+      margin: 5px 5px 5px 0;
       padding: 7px 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 13px;
+      font-size: 14px;
+      transition: 0.3s;
     }
+    .filtros input:focus { border-color: #007bff; outline: none; }
 
     /* Cards */
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      padding: 0 10px;
-      margin-bottom: 25px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
     }
     .card {
       background: white;
       padding: 15px;
       border-radius: 12px;
       text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .card h3 {
-      margin: 5px 0;
-      font-size: 15px;
-      color: #666;
-    }
-    .card p {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 4px 0;
-    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
+    .card h3 { margin: 5px 0; font-size: 16px; color: #666; }
+    .card p { font-size: 20px; font-weight: bold; }
 
     /* Gráficos */
     .charts {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-      padding: 0 10px 30px;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
     }
     .chart-box {
       background: white;
-      padding: 15px;
+      padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .chart-box h3 {
-      font-size: 15px;
-      margin-bottom: 10px;
-      color: #444;
-    }
-
-    /* Ajuste para celular */
-    @media (max-width: 600px) {
-      h1 { font-size: 20px; }
-      .btn { width: 100%; text-align: center; }
-      .charts { grid-template-columns: 1fr; }
-      .filtros { font-size: 13px; }
-    }
+    .chart-box:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
+    canvas { max-width: 100%; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>📊 Painel da Estação EMBC</h1>
-    <div id="descricao">Mini Estação Meteorológica de baixo custo desenvolvida por Luis Davi — monitoramento ambiental em tempo real.</div>
-  </header>
-
-  <div class="acoes">
-    <button class="btn btn-local" onclick="window.open('https://maps.app.goo.gl/zd4LaZUR3F4RVvzY6', '_blank')">📍 Localização</button>
-    <button class="btn btn-dados" onclick="window.open('https://docs.google.com/spreadsheets/d/1DrBibADQkK6NwclW4pbWkYfFkyDx3-VfQlRyrPnmPYo/edit?gid=0#gid=0', '_blank')">📂 Base de Dados</button>
-  </div>
-
+  <h1>📊 Painel da Estação EMBC</h1>
+  <div id="descricao">Esta é a Mini Estação Meteorológica de baixo custo desenvolvida por Luis Davi, coletando dados ambientais em tempo real.</div>
+  <button id="btnLocalizacao" onclick="window.open('https://maps.app.goo.gl/zd4LaZUR3F4RVvzY6', '_blank')">📍 Localização da Estação</button>
+  <button id="btndados" onclick="window.open('https://docs.google.com/spreadsheets/d/1DrBibADQkK6NwclW4pbWkYfFkyDx3-VfQlRyrPnmPYo/edit?gid=0#gid=0', '_blank')">Base de Dados</button>
   <div id="ultimaAtualizacao">Última atualização: --</div>
 
   <!-- Filtros -->
   <div class="filtros">
     <button class="btnFiltro" id="btn24h">Últimas 24h</button>
-    <button class="btnFiltro" id="btn7dias">Últimos 7 dias</button><br>
+    <button class="btnFiltro" id="btn7dias">Últimos 7 dias</button>
     <label>Início: <input type="datetime-local" id="dataInicio"></label>
     <label>Fim: <input type="datetime-local" id="dataFim"></label>
-    <button class="btnFiltro" id="btnCustom">Aplicar</button>
+    <button class="btnFiltro" id="btnCustom">Aplicar filtro</button>
   </div>
 
-  <!-- Cards -->
+  <!-- Indicadores principais -->
   <div class="cards">
     <div class="card"><h3>🌡️ Temperatura</h3><p id="temp">-- °C</p></div>
     <div class="card"><h3>💧 Umidade</h3><p id="umid">-- %</p></div>
@@ -251,7 +193,17 @@
         options: {
           responsive: true,
           scales: { x: { display: true, ticks: { maxRotation: 45, minRotation: 45 } }, y: { beginAtZero: true } },
-          plugins: { legend: { display: true } }
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                label: context => `${context.dataset.label}: ${context.formattedValue}`,
+                title: context => context[0].label
+              }
+            }
+          }
         }
       });
     }
@@ -270,3 +222,5 @@
   </script>
 </body>
 </html>
+
+
