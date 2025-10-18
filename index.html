@@ -2,35 +2,98 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>📊 Painel da Estação EMBC</title>
+  <title>📊 Painel da Estação Meteorológica</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
-    h1 { text-align: center; margin-bottom: 5px; }
-    #descricao, #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 10px; }
-
-    #btnLocalizacao, #btndados {
-      display: block; margin: 0 auto 20px auto;
-      background: #28a745; color: white; border: none;
-      border-radius: 8px; padding: 10px 20px;
-      font-size: 14px; cursor: pointer; transition: 0.3s;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f6f9;
+      color: #333;
     }
-    #btnLocalizacao:hover, #btndados:hover { background: #1e7e34; }
+    h1 { text-align: center; margin-bottom: 5px; }
+    #descricao { text-align: center; font-size: 14px; color: #555; margin-bottom: 10px; }
+    #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 20px; }
 
+    /* Botão de localização */
+    #btnLocalizacao {
+      display: block;
+      margin: 0 auto 20px auto;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #btnLocalizacao:hover {
+      background: #1e7e34;
+    }
+        /* Botão de Banco de Dados */
+    #btndados {
+      display: block;
+      margin: 0 auto 20px auto;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #btndados:hover {
+      background: #1e7e38;
+    }
+
+    
+
+    /* Filtros */
+    .filtros { text-align: center; margin-bottom: 25px; }
+    .btnFiltro {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+      transition: 0.3s;
+    }
+    .btnFiltro:hover { background: #0056b3; }
+    .filtros input {
+      margin: 5px 5px 5px 0;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+    .filtros input:focus { border-color: #007bff; outline: none; }
+
+    /* Cards */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px; margin-bottom: 20px;
+      gap: 15px;
+      margin-bottom: 20px;
     }
     .card {
-      background: white; padding: 15px;
-      border-radius: 12px; text-align: center;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
       box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .card:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
     .card h3 { margin: 5px 0; font-size: 16px; color: #666; }
+    .card p { font-size: 20px; font-weight: bold; }
 
+    /* Gráficos */
     .charts {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -42,18 +105,28 @@
       border-radius: 12px;
       box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
       transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
     }
     .chart-box:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
+    canvas { max-width: 100%; }
   </style>
 </head>
 <body>
   <h1>📊 Painel da Estação EMBC</h1>
-  <div id="descricao">Mini Estação Meteorológica desenvolvida por Luis Davi, coletando dados ambientais em tempo real.</div>
+  <div id="descricao">Esta é a Mini Estação Meteorológica de baixo custo desenvolvida por Luis Davi, coletando dados ambientais em tempo real.</div>
   <button id="btnLocalizacao" onclick="window.open('https://maps.app.goo.gl/zd4LaZUR3F4RVvzY6', '_blank')">📍 Localização da Estação</button>
   <button id="btndados" onclick="window.open('https://docs.google.com/spreadsheets/d/1DrBibADQkK6NwclW4pbWkYfFkyDx3-VfQlRyrPnmPYo/edit?gid=0#gid=0', '_blank')">📂 Base de Dados</button>
   <div id="ultimaAtualizacao">Última atualização: --</div>
 
+  <!-- Filtros -->
+  <div class="filtros">
+    <button class="btnFiltro" id="btn24h">Últimas 24h</button>
+    <button class="btnFiltro" id="btn7dias">Últimos 7 dias</button>
+    <label>Início: <input type="datetime-local" id="dataInicio"></label>
+    <label>Fim: <input type="datetime-local" id="dataFim"></label>
+    <button class="btnFiltro" id="btnCustom">Aplicar filtro</button>
+  </div>
+
+  <!-- Indicadores principais -->
   <div class="cards">
     <div class="card"><h3>🌡️ Temperatura</h3><p id="temp">-- °C</p></div>
     <div class="card"><h3>💧 Umidade</h3><p id="umid">-- %</p></div>
@@ -62,16 +135,18 @@
     <div class="card"><h3>🌧️ Pluviometria</h3><p id="chuva">-- mm</p></div>
   </div>
 
+  <!-- Gráficos -->
   <div class="charts">
-    <div class="chart-box" onclick="abrirDetalhes('temperatura')"><h3>🌡️ Temperatura</h3><canvas id="graficoTemp"></canvas></div>
-    <div class="chart-box" onclick="abrirDetalhes('umidade')"><h3>💧 Umidade</h3><canvas id="graficoUmid"></canvas></div>
-    <div class="chart-box" onclick="abrirDetalhes('vento')"><h3>🌬️ Vento</h3><canvas id="graficoVento"></canvas></div>
-    <div class="chart-box" onclick="abrirDetalhes('irradiacao')"><h3>☀️ Irradiação Solar</h3><canvas id="graficoIrr"></canvas></div>
-    <div class="chart-box" style="grid-column: span 2;" onclick="abrirDetalhes('chuva')"><h3>🌧️ Pluviometria</h3><canvas id="graficoChuva"></canvas></div>
+    <div class="chart-box"><h3>🌡️ Temperatura</h3><canvas id="graficoTemp"></canvas></div>
+    <div class="chart-box"><h3>💧 Umidade</h3><canvas id="graficoUmid"></canvas></div>
+    <div class="chart-box"><h3>🌬️ Vento</h3><canvas id="graficoVento"></canvas></div>
+    <div class="chart-box"><h3>☀️ Irradiação Solar</h3><canvas id="graficoIrr"></canvas></div>
+    <div class="chart-box" style="grid-column: span 2;"><h3>🌧️ Pluviometria</h3><canvas id="graficoChuva"></canvas></div>
   </div>
 
   <script>
     let csvData = [];
+
     async function carregarCSV() {
       const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
       const resposta = await fetch(url);
@@ -89,19 +164,29 @@
           chuva: parseFloat(cols[7])
         };
       });
-      atualizarPainel();
+
+      atualizarPainel(1);
     }
 
-    function atualizarPainel() {
-      const datas = csvData.map(i => i.dataHora.toLocaleString());
-      const temperaturas = csvData.map(i => i.temp);
-      const umidades = csvData.map(i => i.umid);
-      const ventos = csvData.map(i => i.vento);
-      const irradiacoes = csvData.map(i => i.irr);
-      const chuvas = csvData.map(i => i.chuva);
+    function atualizarPainel(dias = 1, dataInicio = null, dataFim = null) {
+      let dadosFiltrados = csvData;
+      if (dataInicio && dataFim) {
+        dadosFiltrados = csvData.filter(item => item.dataHora >= dataInicio && item.dataHora <= dataFim);
+      } else {
+        const agora = new Date();
+        const limite = new Date(agora.getTime() - dias*24*60*60*1000);
+        dadosFiltrados = csvData.filter(item => item.dataHora >= limite);
+      }
 
-      const ultimo = csvData.at(-1);
-      if (ultimo) {
+      const datas = dadosFiltrados.map(i => i.dataHora.toLocaleString());
+      const temperaturas = dadosFiltrados.map(i => i.temp);
+      const umidades = dadosFiltrados.map(i => i.umid);
+      const ventos = dadosFiltrados.map(i => i.vento);
+      const irradiacoes = dadosFiltrados.map(i => i.irr);
+      const chuvas = dadosFiltrados.map(i => i.chuva);
+
+      if (dadosFiltrados.length > 0) {
+        const ultimo = dadosFiltrados.at(-1);
         document.getElementById("temp").innerText = ultimo.temp + " °C";
         document.getElementById("umid").innerText = ultimo.umid + " %";
         document.getElementById("vento").innerText = ultimo.vento + " km/h";
@@ -118,19 +203,40 @@
     }
 
     function criarGrafico(id, label, labels, dados, cor) {
-      const ctx = document.getElementById(id).getContext("2d");
-      new Chart(ctx, {
+      const ctx = document.getElementById(id).getContext('2d');
+      if (ctx.chart) ctx.chart.destroy();
+      ctx.chart = new Chart(ctx, {
         type: "line",
         data: { labels, datasets: [{ label, data: dados, borderColor: cor, borderWidth: 2, tension: 0.3, fill: false, pointRadius: 0 }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: {
+          responsive: true,
+          scales: { x: { display: true, ticks: { maxRotation: 45, minRotation: 45 } }, y: { beginAtZero: true } },
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                label: context => `${context.dataset.label}: ${context.formattedValue}`,
+                title: context => context[0].label
+              }
+            }
+          }
+        }
       });
     }
 
-    function abrirDetalhes(param) {
-      window.open(`detalhes.html?param=${param}`, "_blank");
-    }
+    document.getElementById("btn24h").addEventListener("click", () => atualizarPainel(1));
+    document.getElementById("btn7dias").addEventListener("click", () => atualizarPainel(7));
+    document.getElementById("btnCustom").addEventListener("click", () => {
+      const inicio = new Date(document.getElementById("dataInicio").value);
+      const fim = new Date(document.getElementById("dataFim").value);
+      fim.setSeconds(59, 999);
+      atualizarPainel(0, inicio, fim);
+    });
 
     carregarCSV();
+    setInterval(carregarCSV, 5 * 60 * 1000);
   </script>
 </body>
 </html>
