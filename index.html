@@ -1,136 +1,267 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>📊 Painel da Estação EMBC</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel da Estação Meteorológica</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
-    h1 { text-align: center; margin-bottom: 5px; }
-    #descricao, #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 10px; }
-
-    #btnLocalizacao, #btndados {
-      display: block; margin: 0 auto 20px auto;
-      background: #28a745; color: white; border: none;
-      border-radius: 8px; padding: 10px 20px;
-      font-size: 14px; cursor: pointer; transition: 0.3s;
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #e6f0ff, #ffffff);
+      color: #222;
+      margin: 0;
+      padding: 0;
     }
-    #btnLocalizacao:hover, #btndados:hover { background: #1e7e34; }
 
-    .cards {
+    h1 {
+      text-align: center;
+      background: #007bff;
+      color: white;
+      padding: 15px 0;
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.5px;
+    }
+
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px; margin-bottom: 20px;
-    }
-    .card {
-      background: white; padding: 15px;
-      border-radius: 12px; text-align: center;
-      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
-    .card h3 { margin: 5px 0; font-size: 16px; color: #666; }
-
-    .charts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 25px;
-    }
-    .chart-box {
-      background: white;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
+      transition: 0.3s;
       cursor: pointer;
     }
-    .chart-box:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
+
+    .card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .label {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    canvas {
+      width: 100%;
+      height: 250px;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: #ff4b4b;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .filter-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 20px;
+    }
+
+    select {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
-  <h1>📊 Painel da Estação EMBC</h1>
-  <div id="descricao">Mini Estação Meteorológica desenvolvida por Luis Davi, coletando dados ambientais em tempo real.</div>
-  <button id="btnLocalizacao" onclick="window.open('https://maps.app.goo.gl/zd4LaZUR3F4RVvzY6', '_blank')">📍 Localização da Estação</button>
-  <button id="btndados" onclick="window.open('https://docs.google.com/spreadsheets/d/1DrBibADQkK6NwclW4pbWkYfFkyDx3-VfQlRyrPnmPYo/edit?gid=0#gid=0', '_blank')">📂 Base de Dados</button>
-  <div id="ultimaAtualizacao">Última atualização: --</div>
+  <h1>📊 Painel da Estação Meteorológica</h1>
+  <div class="grid" id="cards"></div>
 
-  <div class="cards">
-    <div class="card"><h3>🌡️ Temperatura</h3><p id="temp">-- °C</p></div>
-    <div class="card"><h3>💧 Umidade</h3><p id="umid">-- %</p></div>
-    <div class="card"><h3>🌬️ Vento</h3><p id="vento">-- km/h</p></div>
-    <div class="card"><h3>☀️ Irradiação</h3><p id="irr">-- W/m²</p></div>
-    <div class="card"><h3>🌧️ Pluviometria</h3><p id="chuva">-- mm</p></div>
-  </div>
-
-  <div class="charts">
-    <div class="chart-box" onclick="abrirDetalhes('temperatura')"><h3>🌡️ Temperatura</h3><canvas id="graficoTemp"></canvas></div>
-    <div class="chart-box" onclick="abrirDetalhes('umidade')"><h3>💧 Umidade</h3><canvas id="graficoUmid"></canvas></div>
-    <div class="chart-box" onclick="abrirDetalhes('vento')"><h3>🌬️ Vento</h3><canvas id="graficoVento"></canvas></div>
-    <div class="chart-box" onclick="abrirDetalhes('irradiacao')"><h3>☀️ Irradiação Solar</h3><canvas id="graficoIrr"></canvas></div>
-    <div class="chart-box" style="grid-column: span 2;" onclick="abrirDetalhes('chuva')"><h3>🌧️ Pluviometria</h3><canvas id="graficoChuva"></canvas></div>
+  <!-- Modal de detalhes -->
+  <div id="detailsModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <h2 id="modalTitle"></h2>
+      <div class="filter-container">
+        <label for="monthSelect">Filtrar por mês:</label>
+        <select id="monthSelect" onchange="filterByMonth()">
+          <option value="all">Todos</option>
+          <option value="01">Janeiro</option>
+          <option value="02">Fevereiro</option>
+          <option value="03">Março</option>
+          <option value="04">Abril</option>
+          <option value="05">Maio</option>
+          <option value="06">Junho</option>
+          <option value="07">Julho</option>
+          <option value="08">Agosto</option>
+          <option value="09">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
+      <canvas id="detailsChart"></canvas>
+    </div>
   </div>
 
   <script>
-    let csvData = [];
-    async function carregarCSV() {
-      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
-      const resposta = await fetch(url);
-      const texto = await resposta.text();
-      const linhas = texto.trim().split("\n").slice(1);
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
 
-      csvData = linhas.map(linha => {
-        const cols = linha.split(",");
-        return {
-          dataHora: new Date(cols[1] + " " + cols[2]),
-          temp: parseFloat(cols[3]),
-          umid: parseFloat(cols[4]),
-          vento: parseFloat(cols[5]),
-          irr: parseFloat(cols[6]),
-          chuva: parseFloat(cols[7])
-        };
+    const parameters = [
+      { key: "temperatura", label: "🌡️ Temperatura", unit: "°C", color: "#ff5733" },
+      { key: "umidade", label: "💧 Umidade", unit: "%", color: "#33b5e5" },
+      { key: "vento", label: "🌬️ Vento", unit: "km/h", color: "#00c851" },
+      { key: "irradiacao", label: "☀️ Irradiação", unit: "W/m²", color: "#ffbb33" },
+      { key: "chuva", label: "🌧️ Pluviometria", unit: "mm", color: "#4285f4" },
+    ];
+
+    let allData = [];
+    let chartInstance;
+
+    fetch(SHEET_URL)
+      .then((res) => res.text())
+      .then((csv) => {
+        const rows = csv.split("\n").slice(1);
+        allData = rows.map((row) => {
+          const cols = row.split(",");
+          return {
+            data: cols[1],
+            hora: cols[2],
+            temperatura: parseFloat(cols[3]),
+            umidade: parseFloat(cols[4]),
+            vento: parseFloat(cols[5]),
+            irradiacao: parseFloat(cols[6]),
+            chuva: parseFloat(cols[7]),
+          };
+        });
+        renderCards();
       });
-      atualizarPainel();
+
+    function renderCards() {
+      const container = document.getElementById("cards");
+      container.innerHTML = "";
+      const latest = allData[allData.length - 1] || {};
+
+      parameters.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="label">${p.label}</div>
+          <div class="value">${latest[p.key] ?? "--"} ${p.unit}</div>
+        `;
+        card.onclick = () => openModal(p);
+        container.appendChild(card);
+      });
     }
 
-    function atualizarPainel() {
-      const datas = csvData.map(i => i.dataHora.toLocaleString());
-      const temperaturas = csvData.map(i => i.temp);
-      const umidades = csvData.map(i => i.umid);
-      const ventos = csvData.map(i => i.vento);
-      const irradiacoes = csvData.map(i => i.irr);
-      const chuvas = csvData.map(i => i.chuva);
-
-      const ultimo = csvData.at(-1);
-      if (ultimo) {
-        document.getElementById("temp").innerText = ultimo.temp + " °C";
-        document.getElementById("umid").innerText = ultimo.umid + " %";
-        document.getElementById("vento").innerText = ultimo.vento + " km/h";
-        document.getElementById("irr").innerText = ultimo.irr + " W/m²";
-        document.getElementById("chuva").innerText = ultimo.chuva + " mm";
-        document.getElementById("ultimaAtualizacao").innerText = "Última atualização: " + ultimo.dataHora.toLocaleString();
-      }
-
-      criarGrafico("graficoTemp", "Temperatura (°C)", datas, temperaturas, "red");
-      criarGrafico("graficoUmid", "Umidade (%)", datas, umidades, "blue");
-      criarGrafico("graficoVento", "Vento (km/h)", datas, ventos, "orange");
-      criarGrafico("graficoIrr", "Irradiação (W/m²)", datas, irradiacoes, "purple");
-      criarGrafico("graficoChuva", "Pluviometria (mm)", datas, chuvas, "green");
+    function openModal(param) {
+      document.getElementById("detailsModal").style.display = "flex";
+      document.getElementById("modalTitle").textContent = `${param.label} - Histórico`;
+      renderChart(param.key, param.color);
     }
 
-    function criarGrafico(id, label, labels, dados, cor) {
-      const ctx = document.getElementById(id).getContext("2d");
-      new Chart(ctx, {
+    function closeModal() {
+      document.getElementById("detailsModal").style.display = "none";
+      if (chartInstance) chartInstance.destroy();
+    }
+
+    function renderChart(key, color) {
+      const ctx = document.getElementById("detailsChart").getContext("2d");
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
         type: "line",
-        data: { labels, datasets: [{ label, data: dados, borderColor: cor, borderWidth: 2, tension: 0.3, fill: false, pointRadius: 0 }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        data: {
+          labels: allData.map((d) => d.hora),
+          datasets: [{
+            label: key,
+            data: allData.map((d) => d[key]),
+            borderColor: color,
+            fill: false,
+            tension: 0.2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { display: true },
+            y: { beginAtZero: false }
+          }
+        }
       });
     }
 
-    function abrirDetalhes(param) {
-      window.open(`detalhes.html?param=${param}`, "_blank");
+    function filterByMonth() {
+      const month = document.getElementById("monthSelect").value;
+      if (month === "all") {
+        renderChart(currentParam.key, currentParam.color);
+        return;
+      }
+      const filtered = allData.filter((d) => d.data && d.data.split("/")[1] === month);
+      chartInstance.data.labels = filtered.map((d) => d.hora);
+      chartInstance.data.datasets[0].data = filtered.map((d) => d[currentParam.key]);
+      chartInstance.update();
     }
 
-    carregarCSV();
+    let currentParam = {};
+    function openModal(param) {
+      currentParam = param;
+      document.getElementById("detailsModal").style.display = "flex";
+      document.getElementById("modalTitle").textContent = `${param.label} - Histórico`;
+      renderChart(param.key, param.color);
+    }
   </script>
 </body>
 </html>
