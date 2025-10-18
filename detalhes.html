@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>📈 Detalhes do Parâmetro</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; }
+    h1 { text-align: center; }
+    .info { text-align: center; margin: 15px 0; }
+    .chart-box {
+      background: white; padding: 20px;
+      border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-width: 900px; margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="titulo"></h1>
+  <div class="info" id="estatisticas"></div>
+  <div class="chart-box"><canvas id="graficoDetalhe"></canvas></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const parametro = params.get("param");
+    const nomes = {
+      temperatura: "🌡️ Temperatura (°C)",
+      umidade: "💧 Umidade (%)",
+      vento: "🌬️ Vento (km/h)",
+      irradiacao: "☀️ Irradiação Solar (W/m²)",
+      chuva: "🌧️ Pluviometria (mm)"
+    };
+    document.getElementById("titulo").innerText = "📈 Detalhes de " + (nomes[parametro] || parametro);
+
+    async function carregarDados() {
+      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
+      const resposta = await fetch(url);
+      const texto = await resposta.text();
+      const linhas = texto.trim().split("\n").slice(1);
+
+      const dados = linhas.map(linha => {
+        const cols = linha.split(",");
+        return {
+          dataHora: new Date(cols[1] + " " + cols[2]),
+          temp: parseFloat(cols[3]),
+          umid: parseFloat(cols[4]),
+          vento: parseFloat(cols[5]),
+          irr: parseFloat(cols[6]),
+          chuva: parseFloat(cols[7])
+        };
+      });
+
+      const valores = dados.map(i => i[parametro === "irradiacao" ? "irr" : parametro]);
+      const dias = dados.map(i => i.dataHora.toLocaleString());
+
+      const max = Math.max(...valores);
+      const min = Math.min(...valores);
+      const media = (valores.reduce((a, b) => a + b, 0) / valores.length).toFixed(2);
+
+      document.getElementById("estatisticas").innerHTML = `
+        <b>Mínimo:</b> ${min} <br>
+        <b>Máximo:</b> ${max} <br>
+        <b>Média:</b> ${media}
+      `;
+
+      new Chart(document.getElementById("graficoDetalhe"), {
+        type: "line",
+        data: { labels: dias, datasets: [{ label: nomes[parametro], data: valores, borderColor: "blue", borderWidth: 2, tension: 0.3, fill: false }] },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      });
+    }
+    carregarDados();
+  </script>
+</body>
+</html>
