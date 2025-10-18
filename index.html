@@ -5,12 +5,7 @@
   <title>📊 Painel da Estação EMBC</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f4f6f9;
-      color: #333;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
     h1 { text-align: center; margin-bottom: 5px; }
     #descricao, #ultimaAtualizacao { text-align: center; font-size: 14px; color: #555; margin-bottom: 10px; }
 
@@ -22,15 +17,6 @@
     }
     #btnLocalizacao:hover, #btndados:hover { background: #1e7e34; }
 
-    .filtros { text-align: center; margin-bottom: 25px; }
-    .btnFiltro {
-      background: #007bff; color: white; border: none;
-      border-radius: 8px; padding: 8px 15px;
-      cursor: pointer; font-size: 14px; margin: 5px;
-      transition: 0.3s;
-    }
-    .btnFiltro:hover { background: #0056b3; }
-
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -39,11 +25,11 @@
     .card {
       background: white; padding: 15px;
       border-radius: 12px; text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      transition: 0.2s;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
-    .card h3 { margin: 5px 0; color: #666; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
+    .card h3 { margin: 5px 0; font-size: 16px; color: #666; }
 
     .charts {
       display: grid;
@@ -54,16 +40,16 @@
       background: white;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
       cursor: pointer;
-      transition: 0.2s;
     }
-    .chart-box:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+    .chart-box:hover { transform: translateY(-3px); box-shadow: 0px 6px 16px rgba(0,0,0,0.12); }
   </style>
 </head>
 <body>
   <h1>📊 Painel da Estação EMBC</h1>
-  <div id="descricao">Mini Estação Meteorológica de baixo custo desenvolvida por Luis Davi, coletando dados ambientais em tempo real.</div>
+  <div id="descricao">Mini Estação Meteorológica desenvolvida por Luis Davi, coletando dados ambientais em tempo real.</div>
   <button id="btnLocalizacao" onclick="window.open('https://maps.app.goo.gl/zd4LaZUR3F4RVvzY6', '_blank')">📍 Localização da Estação</button>
   <button id="btndados" onclick="window.open('https://docs.google.com/spreadsheets/d/1DrBibADQkK6NwclW4pbWkYfFkyDx3-VfQlRyrPnmPYo/edit?gid=0#gid=0', '_blank')">📂 Base de Dados</button>
   <div id="ultimaAtualizacao">Última atualização: --</div>
@@ -86,7 +72,6 @@
 
   <script>
     let csvData = [];
-
     async function carregarCSV() {
       const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
       const resposta = await fetch(url);
