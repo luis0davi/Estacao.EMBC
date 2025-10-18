@@ -5,18 +5,55 @@
   <title>📈 Detalhes do Parâmetro</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; }
-    h1 { text-align: center; }
-    .info { text-align: center; margin: 15px 0; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
+    h1 { text-align: center; margin-bottom: 5px; }
+    .info { text-align: center; margin: 15px 0; font-size: 15px; }
     .chart-box {
       background: white; padding: 20px;
       border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       max-width: 900px; margin: auto;
     }
+
+    .botoes {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+      transition: 0.3s;
+    }
+    button:hover { background: #0056b3; }
   </style>
 </head>
 <body>
   <h1 id="titulo"></h1>
+  <div class="botoes">
+    <button onclick="window.close()">⬅️ Voltar</button>
+    <select id="mesFiltro">
+      <option value="0">Filtrar por mês...</option>
+      <option value="1">Janeiro</option>
+      <option value="2">Fevereiro</option>
+      <option value="3">Março</option>
+      <option value="4">Abril</option>
+      <option value="5">Maio</option>
+      <option value="6">Junho</option>
+      <option value="7">Julho</option>
+      <option value="8">Agosto</option>
+      <option value="9">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+      <option value="12">Dezembro</option>
+    </select>
+    <button onclick="filtrarMes()">📆 Aplicar filtro</button>
+  </div>
+
   <div class="info" id="estatisticas"></div>
   <div class="chart-box"><canvas id="graficoDetalhe"></canvas></div>
 
@@ -30,7 +67,9 @@
       irradiacao: "☀️ Irradiação Solar (W/m²)",
       chuva: "🌧️ Pluviometria (mm)"
     };
-    document.getElementById("titulo").innerText = "📈 Detalhes de " + (nomes[parametro] || parametro);
+
+    document.getElementById("titulo").innerText = "📈 " + (nomes[parametro] || parametro);
+    let dados = [];
 
     async function carregarDados() {
       const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7EQ0WDdVrrSvfpFU_AKc7NwNhJfQkKo2ndSxZ6Qxg1JDZm7ww9eJTUDjGaPSZS-BqxZXP3WJ8JLbO/pub?output=csv";
@@ -38,7 +77,7 @@
       const texto = await resposta.text();
       const linhas = texto.trim().split("\n").slice(1);
 
-      const dados = linhas.map(linha => {
+      dados = linhas.map(linha => {
         const cols = linha.split(",");
         return {
           dataHora: new Date(cols[1] + " " + cols[2]),
@@ -50,25 +89,37 @@
         };
       });
 
-      const valores = dados.map(i => i[parametro === "irradiacao" ? "irr" : parametro]);
-      const dias = dados.map(i => i.dataHora.toLocaleString());
+      atualizarGrafico();
+    }
+
+    function atualizarGrafico(filtroMes = 0) {
+      let filtrados = filtroMes ? dados.filter(d => d.dataHora.getMonth() + 1 === filtroMes) : dados;
+
+      const valores = filtrados.map(i => i[parametro === "irradiacao" ? "irr" : parametro]);
+      const labels = filtrados.map(i => i.dataHora.toLocaleString());
 
       const max = Math.max(...valores);
       const min = Math.min(...valores);
-      const media = (valores.reduce((a, b) => a + b, 0) / valores.length).toFixed(2);
+      const media = (valores.reduce((a,b)=>a+b,0)/valores.length).toFixed(2);
 
       document.getElementById("estatisticas").innerHTML = `
-        <b>Mínimo:</b> ${min} <br>
-        <b>Máximo:</b> ${max} <br>
+        <b>Máximo:</b> ${max}<br>
+        <b>Mínimo:</b> ${min}<br>
         <b>Média:</b> ${media}
       `;
 
       new Chart(document.getElementById("graficoDetalhe"), {
         type: "line",
-        data: { labels: dias, datasets: [{ label: nomes[parametro], data: valores, borderColor: "blue", borderWidth: 2, tension: 0.3, fill: false }] },
+        data: { labels, datasets: [{ label: nomes[parametro], data: valores, borderColor: "blue", borderWidth: 2, tension: 0.3, fill: false }] },
         options: { responsive: true, scales: { y: { beginAtZero: true } } }
       });
     }
+
+    function filtrarMes() {
+      const mes = parseInt(document.getElementById("mesFiltro").value);
+      atualizarGrafico(mes);
+    }
+
     carregarDados();
   </script>
 </body>
