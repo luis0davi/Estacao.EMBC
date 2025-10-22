@@ -1,34 +1,30 @@
-function doGet(e) {
-  var url = "http://200.137.6.124/?command=TableDisplay&table=Diario&records=24";
-  var html = UrlFetchApp.fetch(url).getContentText();
+<script>
+async function carregarDadosRemotos() {
+  const url = "https://script.googleusercontent.com/macros/s/AKfycbxRqte2fWJFPptkbuUW6-XSzG-kYbiXZqAXe_5zHCc9/exec";
+  
+  try {
+    const resposta = await fetch(url);
+    const dados = await resposta.json();
+    console.log("✅ Dados recebidos:", dados);
 
-  // Extrai linhas da tabela (remove tags HTML)
-  var linhas = html.match(/<tr[\s\S]*?<\/tr>/g);
-  if (!linhas) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ erro: "Tabela não encontrada" })
-    ).setMimeType(ContentService.MimeType.JSON);
+    // Exemplo: pega o último registro
+    const ultimo = dados[dados.length - 1];
+
+    // Atualiza elementos no painel
+    document.getElementById("temp").innerText = ultimo.Temperatura + " °C";
+    document.getElementById("umid").innerText = ultimo.Umidade + " %";
+    document.getElementById("vento").innerText = ultimo.VelocidadeVento + " km/h";
+    document.getElementById("chuva").innerText = ultimo.Pluviometria + " mm";
+    document.getElementById("dataAtual").innerText = ultimo.Data + " " + ultimo.Hora;
+
+  } catch (erro) {
+    console.error("❌ Erro ao carregar dados:", erro);
   }
-
-  var dados = linhas.map(function(linha) {
-    var colunas = linha.match(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g);
-    if (!colunas) return null;
-    return colunas.map(function(c) {
-      return c.replace(/<[^>]+>/g, '').trim();
-    });
-  }).filter(Boolean);
-
-  // transforma em objetos JSON
-  var cabecalho = dados[0];
-  var registros = dados.slice(1).map(function(row) {
-    var obj = {};
-    row.forEach(function(valor, i) {
-      obj[cabecalho[i] || ("coluna_" + i)] = valor;
-    });
-    return obj;
-  });
-
-  return ContentService
-    .createTextOutput(JSON.stringify(registros))
-    .setMimeType(ContentService.MimeType.JSON);
 }
+
+// Atualiza ao carregar a página
+carregarDadosRemotos();
+
+// Atualiza a cada 10 minutos
+setInterval(carregarDadosRemotos, 10 * 60 * 1000);
+</script>
