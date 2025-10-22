@@ -1,30 +1,43 @@
 <script>
-async function carregarDadosRemotos() {
-  const url = "https://script.google.com/macros/s/AKfycbwMqkBnU09-kXvW0tmtXVgHckY1sXMg6gJOqKWB3cQdcIOuLVXC_TwMvi_Oo-OawngqQw/exec";
-  
-  try {
-    const resposta = await fetch(url);
-    const dados = await resposta.json();
-    console.log("✅ Dados recebidos:", dados);
+document.addEventListener("DOMContentLoaded", () => {
 
-    // Exemplo: pega o último registro
-    const ultimo = dados[dados.length - 1];
+  async function carregarDadosRemotos() {
+    const url = "https://script.google.com/macros/s/AKfycbwMqkBnU09-kXvW0tmtXVgHckY1sXMg6gJOqKWB3cQdcIOuLVXC_TwMvi_Oo-OawngqQw/exec";
+    
+    try {
+      const resposta = await fetch(url);
+      const dados = await resposta.json();
+      console.log("✅ Dados recebidos:", dados);
 
-    // Atualiza elementos no painel
-    document.getElementById("temp").innerText = ultimo.Temperatura + " °C";
-    document.getElementById("umid").innerText = ultimo.Umidade + " %";
-    document.getElementById("vento").innerText = ultimo.VelocidadeVento + " km/h";
-    document.getElementById("chuva").innerText = ultimo.Pluviometria + " mm";
-    document.getElementById("dataAtual").innerText = ultimo.Data + " " + ultimo.Hora;
+      // Pega o último registro
+      const ultimo = dados[dados.length - 1];
 
-  } catch (erro) {
-    console.error("❌ Erro ao carregar dados:", erro);
+      // Atualiza elementos no painel, só se existirem
+      const tempEl = document.getElementById("temp");
+      if(tempEl) tempEl.innerText = ultimo.Temperatura + " °C";
+
+      const umidEl = document.getElementById("umid");
+      if(umidEl) umidEl.innerText = ultimo.Umidade + " %";
+
+      const ventoEl = document.getElementById("vento");
+      if(ventoEl) ventoEl.innerText = ultimo.VelocidadeVento + " km/h";
+
+      const chuvaEl = document.getElementById("chuva");
+      if(chuvaEl) chuvaEl.innerText = ultimo.Pluviometria + " mm";
+
+      const dataEl = document.getElementById("dataAtual");
+      if(dataEl) dataEl.innerText = ultimo.Data + " " + ultimo.Hora;
+
+    } catch (erro) {
+      console.error("❌ Erro ao carregar dados:", erro);
+    }
   }
-}
 
-// Atualiza ao carregar a página
-carregarDadosRemotos();
+  // Atualiza ao carregar a página
+  carregarDadosRemotos();
 
-// Atualiza a cada 10 minutos
-setInterval(carregarDadosRemotos, 10 * 60 * 1000);
+  // Atualiza a cada 10 minutos
+  setInterval(carregarDadosRemotos, 10 * 60 * 1000);
+
+});
 </script>
